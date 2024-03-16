@@ -30,6 +30,7 @@ do
         --config.data_offset=$data_offset \
         --config.n_steps=5 \
         --config.test_steps=5 \
-        --config.batch_size=32
+        --config.batch_size=16 \
+        # --config.topk=64
 
 done

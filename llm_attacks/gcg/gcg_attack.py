@@ -13,6 +13,10 @@ from itertools import cycle
 import random
 import string
 
+import nltk
+from nltk.corpus import words
+nltk.download('words')
+
 def token_gradients(model, input_ids, input_slice, target_slice, loss_slice):
 
     """
@@ -95,17 +99,55 @@ class GCGPromptManager(PromptManager):
     def randomly_replace_letter(self, word):
         if len(word) == 0:
             return word  # Return the word as is if it's empty
-
+        word=word.lower()
+        replace_dict = {'a':['q', 'w', 's', 'z', 'x'],
+        'b':['g', 'h', 'v', 'n'],
+        'c':['d', 'f', 'x', 'v'],
+        'd':['e', 'r', 's', 'f', 'x', 'c'],
+        'e':['w', 'r', 's', 'd'],
+        'f':['r', 't', 'd', 'g', 'c', 'v'],
+        'g':['t', 'y', 'f', 'h', 'v', 'b'],
+        'h':['y', 'u', 'g', 'j', 'b', 'n'],
+        'i':['u', 'o', 'j', 'k'],
+        'j':['u', 'i', 'h', 'k', 'n', 'm'],
+        'k':['i', 'o', 'j', 'l', 'm'],
+        'l':['o', 'p', 'k'],
+        'm':['j', 'k', 'n'],
+        'n':['h', 'j', 'b', 'm'],
+        'o':['i', 'p', 'k', 'l'],
+        'p':['o', 'l'],
+        'q':['w', 'a'],
+        'r':['e', 't', 'd', 'f'],
+        's':['w', 'e', 'a', 'd', 'z', 'x'],
+        't':['r', 'y', 'f', 'g'],
+        'u':['y', 'i', 'h', 'j'],
+        'v':['f', 'g', 'c', 'b'],
+        'w':['q', 'e', 'a', 's'],
+        'x':['s', 'd', 'z', 'c'],
+        'y':['t', 'u', 'g', 'h'],
+        'z':['a', 's', 'x']
+        }
+        
+        # Get a list of valid English words
+        valid_words = set(words.words())
+        def replace_letter(word, index, new_letter):
+            return word[:index] + new_letter + word[index + 1:]
+        for i,v in enumerate(word):
+            for new_letter in replace_dict[v]: #this one is based on your dictionary of nearest letter on keyboard
+                new_word = replace_letter(word, i, new_letter)
+                if new_word in valid_words:
+                    return new_word
+        #if none of the words replaced are a legit word, just randomly replace
         # Choose a random position to replace
         random_position = random.randint(0, len(word) - 1)
         
         # Choose a random letter from the alphabet
         # Note: You might want to handle uppercase letters if necessary
-        random_letter = random.choice(string.ascii_lowercase)
+        random_letter = random.choice(replace_dict[word[random_position]])
         
         # Ensure the new letter is different from the original letter
         while random_letter == word[random_position]:
-            random_letter = random.choice(string.ascii_lowercase)
+            random_letter = random.choice(replace_dict[word[random_position]])
 
         # Replace the letter in the chosen position with the random letter
         new_word = word[:random_position] + random_letter + word[random_position + 1:]
@@ -147,7 +189,7 @@ class GCGMultiPromptAttack(MultiPromptAttack):
 
     def step(self, 
              batch_size=1024, 
-             topk=256, 
+             topk=64, 
              temp=1, 
              allow_non_ascii=True, 
              target_weight=1, 
