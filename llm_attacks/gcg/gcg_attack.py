@@ -12,6 +12,7 @@ from itertools import cycle
 
 import random
 import string
+random.seed(42)
 
 import nltk
 from nltk.corpus import words
@@ -94,12 +95,25 @@ class GCGPromptManager(PromptManager):
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
+        print("An instance of GCGPromptManager has been created!")
+        # global_dict={}
+        # global_count=0
 
 
     def randomly_replace_letter(self, word):
-        if len(word) == 0:
-            return word  # Return the word as is if it's empty
+        print("I am getting calleddddd: start from 1, repeated letter")
+
+        print("old word:", word)
+
         word=word.lower()
+
+        if len(word) == 0:
+            # global_count+=1
+            return word  # Return the word as is if it's empty
+        
+        # if len(word) == 1:
+        #     return word
+
         replace_dict = {'a':['q', 'w', 's', 'z', 'x'],
         'b':['g', 'h', 'v', 'n'],
         'c':['d', 'f', 'x', 'v'],
@@ -126,36 +140,53 @@ class GCGPromptManager(PromptManager):
         'x':['s', 'd', 'z', 'c'],
         'y':['t', 'u', 'g', 'h'],
         'z':['a', 's', 'x']
-        }
-        
+        } #get how many times it gets a actual work and how many times it ends up with a random word
         # Get a list of valid English words
         valid_words = set(words.words())
         def replace_letter(word, index, new_letter):
             return word[:index] + new_letter + word[index + 1:]
         for i,v in enumerate(word):
-            for new_letter in replace_dict[v]: #this one is based on your dictionary of nearest letter on keyboard
-                new_word = replace_letter(word, i, new_letter)
-                if new_word in valid_words:
-                    return new_word
+            # if i==0:
+            #     continue
+            if v.isupper():
+                for new_letter in replace_dict[v.lower()]: #this one is based on your dictionary of nearest letter on keyboard
+                        new_word = replace_letter(word, i, new_letter)
+                        if new_word in valid_words:
+                            new_word = replace_letter(word, i, new_letter.upper())
+                            # print('updatedddddddd')
+                            return new_word
+            else:
+                for new_letter in replace_dict[v]:
+                    new_word = replace_letter(word, i, new_letter)
+                    if new_word in valid_words:
+                        # print('updatedddddddd')
+                        return new_word
+        
         #if none of the words replaced are a legit word, just randomly replace
         # Choose a random position to replace
         random_position = random.randint(0, len(word) - 1)
-        
-        # Choose a random letter from the alphabet
-        # Note: You might want to handle uppercase letters if necessary
-        random_letter = random.choice(replace_dict[word[random_position]])
-        
-        # Ensure the new letter is different from the original letter
-        while random_letter == word[random_position]:
-            random_letter = random.choice(replace_dict[word[random_position]])
+        # # Get the letter at the chosen index
+        # letter = word[random_position]
+    
+        # # Repeat the letter
+        # new_word = word[:random_position+1] + letter + word[random_position+1:]
 
+        if word[random_position].isupper():
+            random_letter = replace_dict[word[random_position].lower()][random.randint(0, len(replace_dict[word[random_position].lower()]) - 1)]
+            random_letter = random_letter.upper()
+        else:
+            random_letter = replace_dict[word[random_position]][random.randint(0, len(replace_dict[word[random_position]]) - 1)]
         # Replace the letter in the chosen position with the random letter
         new_word = word[:random_position] + random_letter + word[random_position + 1:]
-        
+
+        # print('randomly replacedddddddd')
+        print("new word:", new_word)
         return new_word
 
 
     def sample_control(self, device, batch_size, indexes=[], current_goal = None):
+
+        # print("current_goal", self.tokenizer.decode(current_goal))
 
         # control_toks = self.control_toks.to(grad.device)
         control_toks = torch.tensor(current_goal).to(device)
@@ -226,16 +257,13 @@ class GCGMultiPromptAttack(MultiPromptAttack):
             else:
                 grad += new_grad
 
-        # punctuation = ['.', ',', '!', '?', ':', '-', '(', ')', '\"', '[', ']', '’',  'at', 'in', 'on', 'to', 'from', 'into', 'of', 'with', 'without', 'for', 'by', 'a', 'the']
-        # punctuation_token = [29889, 29892, 29991, 29973, 29901, 29899, 313, 29897, 376, 518, 29962, 30010, 472, 297, 373, 304, 515, 964, 310, 411, 1728, 363, 491, 263, 278]
 
         # pdb.set_trace()
-        
         token_goals = self.prompts[j].tokenizer(self.goals).input_ids[0][1:]
         values_sum = torch.abs(grad).sum(dim=1)
-        top_values, top_index = torch.topk(values_sum, len(token_goals), dim=0)
+        top_values, top_index = torch.topk(values_sum, len(token_goals), dim=0) #change top k here
 
-        indexes = []
+        indexes = [] 
         for index in top_index.tolist():
             if self.prompts[j].tokenizer.decode(token_goals[index]).isalpha():
                 indexes.append(index)
@@ -258,10 +286,48 @@ class GCGMultiPromptAttack(MultiPromptAttack):
                     for k, worker in enumerate(self.workers):
                         worker(self.prompts[k][i], "logits", worker.model, cand, return_ids=True)
                     logits, ids = zip(*[worker.results.get() for worker in self.workers])
-                    loss[fan*batch_size:(fan+1)*batch_size] += sum([
-                        target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1).to(main_device) 
-                        for k, (logit, id) in enumerate(zip(logits, ids))
-                    ])
+                    # Initialize a temporary tensor to accumulate losses for smaller batches
+                    temp_loss = torch.zeros(batch_size, device=main_device)
+                    # print('logits.size()',logits.size())
+                    # print('ids.size()',ids.size())
+                    for k, (logit, id) in enumerate(zip(logits, ids)):
+                        # print('logit.size()',logit.size())
+                        # print('id.size()',id.size())
+                        # Split logits and ids into smaller batches
+                        logit_batches = torch.chunk(logit, batch_size//8, dim=0)
+                        id_batches = torch.chunk(id, batch_size//8, dim=0)
+                        index=0
+                        # Compute losses for each smaller batch and accumulate them
+                        for logit_batch, id_batch in zip(logit_batches, id_batches):
+                            end_index = index + logit_batch.size(0)
+                            temp_loss[index:end_index] += target_weight * self.prompts[k][i].target_loss(logit_batch, id_batch).mean(dim=-1)
+                            index=end_index
+                            print("temp_loss", temp_loss)
+
+                    # # Move accumulated losses to the appropriate device
+                    # temp_loss = temp_loss.to(main_device)
+
+                    # Add accumulated losses to the appropriate slice of the loss tensor
+                    loss[fan*batch_size:(fan+1)*batch_size] += temp_loss
+
+                    # loss[fan*batch_size:(fan+1)*batch_size] += sum([
+                    #     target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1)
+                    #     for k, (logit, id) in enumerate(zip(logits, ids))
+                    # ])
+                    # print(loss[fan*batch_size:(fan+1)*batch_size])
+                    # loss[fan*batch_size:(fan+1)*batch_size] += sum([
+                    #     target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1).to(main_device) 
+                    #     for k, (logit, id) in enumerate(zip(logits, ids))
+                    # ])
+                    # print([
+                    #     target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1).to(main_device) 
+                    #     for k, (logit, id) in enumerate(zip(logits, ids))
+                    # ])
+                    # print(sum([
+                    #     target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1).to(main_device) 
+                    #     for k, (logit, id) in enumerate(zip(logits, ids))
+                    # ]))
+                    # print(loss[fan*batch_size:(fan+1)*batch_size])
                     if control_weight != 0:
                         loss[fan*batch_size:(fan+1)*batch_size] += sum([
                             control_weight*self.prompts[k][i].control_loss(logit, id).mean(dim=-1).to(main_device)
@@ -289,5 +355,6 @@ class GCGMultiPromptAttack(MultiPromptAttack):
 
         print('Current length:', len(self.workers[0].tokenizer(next_control).input_ids[1:]))
         print(next_control)
+        torch.cuda.empty_cache()
 
         return next_control, cand_loss.item() / len(self.prompts[0]) / len(self.workers)
