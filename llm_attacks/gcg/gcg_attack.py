@@ -12,7 +12,7 @@ from itertools import cycle
 
 import random
 import string
-random.seed(42)
+# random.seed(42)
 
 import nltk
 from nltk.corpus import words
@@ -108,12 +108,10 @@ class GCGPromptManager(PromptManager):
         word=word.lower()
 
         if len(word) == 0:
-            # global_count+=1
             return word  # Return the word as is if it's empty
         
-        # if len(word) == 1:
-        #     return word
-
+        if len(word) == 1:
+            return word
         replace_dict = {'a':['q', 'w', 's', 'z', 'x'],
         'b':['g', 'h', 'v', 'n'],
         'c':['d', 'f', 'x', 'v'],
@@ -140,44 +138,113 @@ class GCGPromptManager(PromptManager):
         'x':['s', 'd', 'z', 'c'],
         'y':['t', 'u', 'g', 'h'],
         'z':['a', 's', 'x']
-        } #get how many times it gets a actual work and how many times it ends up with a random word
+        }
+        #     if word in string.punctuation:
+        #         # Generate a random punctuation character
+        #         new_punctuation = random.choice(string.punctuation)
+        #         return new_punctuation
+        #     else:
+        #         return word
+
+        # replace_dict = {'a':['q', 'w', 's', 'z', 'x'],
+        # 'b':['g', 'h', 'v', 'n'],
+        # 'c':['d', 'f', 'x', 'v'],
+        # 'd':['e', 'r', 's', 'f', 'x', 'c'],
+        # 'e':['w', 'r', 's', 'd', '3', '4'],
+        # 'f':['r', 't', 'd', 'g', 'c', 'v'],
+        # 'g':['t', 'y', 'f', 'h', 'v', 'b'],
+        # 'h':['y', 'u', 'g', 'j', 'b', 'n'],
+        # 'i':['u', 'o', 'j', 'k', '8', '9'],
+        # 'j':['u', 'i', 'h', 'k', 'n', 'm'],
+        # 'k':['i', 'o', 'j', 'l', 'm'],
+        # 'l':['o', 'p', 'k'],
+        # 'm':['j', 'k', 'n'],
+        # 'n':['h', 'j', 'b', 'm'],
+        # 'o':['i', 'p', 'k', 'l', '9','0'],
+        # 'p':['o', 'l','0'],
+        # 'q':['w', 'a', '1', '2'],
+        # 'r':['e', 't', 'd', 'f', '4', '5'],
+        # 's':['w', 'e', 'a', 'd', 'z', 'x'],
+        # 't':['r', 'y', 'f', 'g', '5', '6'],
+        # 'u':['y', 'i', 'h', 'j', '7', '8'],
+        # 'v':['f', 'g', 'c', 'b'],
+        # 'w':['q', 'e', 'a', 's', '2', '3'],
+        # 'x':['s', 'd', 'z', 'c'],
+        # 'y':['t', 'u', 'g', 'h','6','7'],
+        # 'z':['a', 's', 'x']
+        # } #get how many times it gets a actual work and how many times it ends up with a random word
         # Get a list of valid English words
         valid_words = set(words.words())
         def replace_letter(word, index, new_letter):
             return word[:index] + new_letter + word[index + 1:]
+        check=False
         for i,v in enumerate(word):
-            # if i==0:
-            #     continue
+            if i==0:
+                continue
             if v.isupper():
                 for new_letter in replace_dict[v.lower()]: #this one is based on your dictionary of nearest letter on keyboard
                         new_word = replace_letter(word, i, new_letter)
                         if new_word in valid_words:
                             new_word = replace_letter(word, i, new_letter.upper())
+                            check=True
+                            break
                             # print('updatedddddddd')
-                            return new_word
+                            # return new_word
             else:
-                for new_letter in replace_dict[v]:
-                    new_word = replace_letter(word, i, new_letter)
-                    if new_word in valid_words:
+                try:
+                    for new_letter in replace_dict[v]:
+                        new_word = replace_letter(word, i, new_letter)
+                        if new_word in valid_words:
+                            check=True
+                            break
+                except:
+                    continue
+            if check==True:
+                word=new_word
+                break
                         # print('updatedddddddd')
-                        return new_word
-        
+                        # return new_word
+        # word=new_word
         #if none of the words replaced are a legit word, just randomly replace
         # Choose a random position to replace
-        random_position = random.randint(0, len(word) - 1)
-        # # Get the letter at the chosen index
-        # letter = word[random_position]
+        random_position = random.randint(1, len(word) - 1)
+        # while word[random_position] in '1234567890':
+        #     print('in the while loop')
+        #     random_position = random.randint(1, len(word) - 1)
     
-        # # Repeat the letter
-        # new_word = word[:random_position+1] + letter + word[random_position+1:]
-
-        if word[random_position].isupper():
-            random_letter = replace_dict[word[random_position].lower()][random.randint(0, len(replace_dict[word[random_position].lower()]) - 1)]
-            random_letter = random_letter.upper()
-        else:
-            random_letter = replace_dict[word[random_position]][random.randint(0, len(replace_dict[word[random_position]]) - 1)]
+        try:
+            if word[random_position].isupper():
+                random_letter = replace_dict[word[random_position].lower()][random.randint(1, len(replace_dict[word[random_position].lower()]) - 1)]
+                random_letter = random_letter.upper()
+            else:
+                random_letter = replace_dict[word[random_position]][random.randint(1, len(replace_dict[word[random_position]]) - 1)]
         # Replace the letter in the chosen position with the random letter
-        new_word = word[:random_position] + random_letter + word[random_position + 1:]
+            new_word = word[:random_position] + random_letter + word[random_position + 1:]
+            word=new_word
+        except:
+            pass
+        
+        
+        random_position = random.randint(1, len(word) - 1)
+
+        #repeated letter
+         # Get the letter at the chosen index
+        letter = word[random_position]
+    
+        # Repeat the letter
+        new_word = word[:random_position+1] + letter + word[random_position+1:]
+
+        # #add punctuations
+        # # if random.randint(0,1) == 1:
+        # all_punctuations = string.punctuation
+        # random_punctuation = random.choice(all_punctuations)
+        # new_word = new_word + random_punctuation
+
+        # #add spacing
+        # new_word=new_word+' '
+
+        # #add number
+        # new_word+=str(random.randint(0,9))
 
         # print('randomly replacedddddddd')
         print("new word:", new_word)
@@ -261,10 +328,28 @@ class GCGMultiPromptAttack(MultiPromptAttack):
         # pdb.set_trace()
         token_goals = self.prompts[j].tokenizer(self.goals).input_ids[0][1:]
         values_sum = torch.abs(grad).sum(dim=1)
+        print('values_sum',values_sum)
         top_values, top_index = torch.topk(values_sum, len(token_goals), dim=0) #change top k here
+
+        for index, token_id in enumerate(token_goals):
+            # Decode the current token
+            decoded_token = self.prompts[j].tokenizer.decode(token_id)
+            print(decoded_token)
+            
+            # print(self.prompts[j].tokenizer.decode(token_goals[index:index+10]).lower())
+            print(self.prompts[j].tokenizer.decode(token_goals[index:index+13]).lower())
+            # if decoded_token.lower() == "goal" and \
+            if self.prompts[j].tokenizer.decode(token_goals[index:index+13]).lower() == "tom cruise. so the answer is (d).\n\n".lower(): 
+                consider=index+13
+                print('consider',self.prompts[j].tokenizer.decode(token_goals[consider]).lower())
+                break
 
         indexes = [] 
         for index in top_index.tolist():
+            if index<consider:
+                continue
+            if index>len(token_goals)-10:
+                continue
             if self.prompts[j].tokenizer.decode(token_goals[index]).isalpha():
                 indexes.append(index)
 
@@ -302,7 +387,7 @@ class GCGMultiPromptAttack(MultiPromptAttack):
                             end_index = index + logit_batch.size(0)
                             temp_loss[index:end_index] += target_weight * self.prompts[k][i].target_loss(logit_batch, id_batch).mean(dim=-1)
                             index=end_index
-                            print("temp_loss", temp_loss)
+                            # print("temp_loss", temp_loss)
 
                     # # Move accumulated losses to the appropriate device
                     # temp_loss = temp_loss.to(main_device)
