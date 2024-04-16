@@ -3,11 +3,11 @@ import random
 random.seed(42)
 
 # Load the original JSON data
-with open('/home/users/nus/e1154542/scratch/COT-Robust/temporal.json', 'r') as f:
+with open('temporal.json', 'r') as f:
     old_data = json.load(f)
 
 # Read the contents of the text file
-with open('/home/users/nus/e1154542/scratch/COT-Robust/cot_temporal.txt', 'r') as file:
+with open('cot_temporal.txt', 'r') as file:
     text_content = file.read().strip()
 # print(old_data)
 data=random.sample(old_data['examples'],50)
@@ -24,7 +24,7 @@ new_data = {
 }
 
 # Write the new JSON data to a file
-with open('/home/users/nus/e1154542/scratch/COT-Robust/data/50_temporal.json', 'w') as f:
+with open('data/50_temporal.json', 'w') as f:
     json.dump(new_data, f, indent=4)
 
 
