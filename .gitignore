@@ -332,14 +332,6 @@ arithmetic.json
 boolean.json
 boolean.txt
 causal_judgement.json
-cot_arithmetic.txt
-cot_causal copy.txt
-cot_formal_fallicies copy.txt
-cot_lies.txt
-cot_movie.txt
-cot_penguins.txt
-cot_snarks.txt
-cot_sports.txt
 few_shot.txt
 formal_fallicies.json
 movie.json
@@ -349,11 +341,6 @@ snarks.json
 sports_understanding.json
 testing_bbh.py
 web_of_lies.json
-data/50_arithmetic.json
-data/50_movie.json
-data/50_penguins.json
-data/50_snarks.json
-data/50_web_of_lies.json
 data/200_sorry_fewshot.json
 data/causal_judgement_sorry.json
 data/formal_fallicies_sorry.json
@@ -564,3 +551,42 @@ experiments/results/individual__vicuna_gcg_offset_20240415-09:14:44.json
 experiments/results/individual__vicuna_gcg_offset_20240415-11:23:20.json
 llm_attacks/gcg/gcg_attack copy 2.py
 llm_attacks/gcg/gcg_attack copy 3.py
+date.json
+temporal.json
+test_boolean.txt
+test_date.txt
+test_lies.txt
+test_penguin.txt
+test_snarks.txt
+experiments/launch_scripts/mistral_.o6761182
+experiments/launch_scripts/mistral_.o6761193
+experiments/launch_scripts/mistral_.o6761197
+experiments/launch_scripts/mistral_.o6761200
+experiments/launch_scripts/mistral_.o6761201
+experiments/launch_scripts/mistral_.o6761206
+experiments/launch_scripts/mistral_.o6761305
+experiments/launch_scripts/mistral_.o6761355
+experiments/launch_scripts/mistral_.o6763441
+experiments/launch_scripts/mistral_.o6763768
+experiments/launch_scripts/mistral_.o6764291
+experiments/launch_scripts/mistral_.o6764292
+experiments/launch_scripts/mistral_.o6764452
+experiments/launch_scripts/mistral_.o6765980
+experiments/launch_scripts/mistral_.o6766083
+experiments/launch_scripts/mistral_.o6766148
+experiments/launch_scripts/mistral_.o6766287
+experiments/launch_scripts/mistral_.o6766324
+experiments/launch_scripts/mistral_.o6766780
+experiments/launch_scripts/mistral_.o6766790
+experiments/launch_scripts/mistral_.o6766872
+experiments/results/individual__vicuna_gcg_offset_20240415-15:11:56.json
+experiments/results/individual__vicuna_gcg_offset_20240415-15:32:23.json
+experiments/results/individual__vicuna_gcg_offset_20240415-21:48:31.json
+experiments/results/individual__vicuna_gcg_offset_20240415-22:26:47.json
+experiments/results/individual__vicuna_gcg_offset_20240415-23:57:23.json
+experiments/results/individual__vicuna_gcg_offset_20240416-00:14:37.json
+create_json.py
+create_json.py
+create_json.py
+cot_formal_fallicies copy.txt
+cot_causal copy.txt

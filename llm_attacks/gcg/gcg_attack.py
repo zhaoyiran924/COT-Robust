@@ -339,7 +339,7 @@ class GCGMultiPromptAttack(MultiPromptAttack):
             # print(self.prompts[j].tokenizer.decode(token_goals[index:index+10]).lower())
             print(self.prompts[j].tokenizer.decode(token_goals[index:index+13]).lower())
             # if decoded_token.lower() == "goal" and \
-            if self.prompts[j].tokenizer.decode(token_goals[index:index+13]).lower() == "tom cruise. so the answer is (d).\n\n".lower(): 
+            if self.prompts[j].tokenizer.decode(token_goals[index:index+13]).lower() == "4pm. So the answer is (D).\n\n".lower(): 
                 consider=index+13
                 print('consider',self.prompts[j].tokenizer.decode(token_goals[consider]).lower())
                 break
