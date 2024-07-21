@@ -36,6 +36,8 @@ def get_config():
     config.n_train_data = 50
     config.n_test_data = 0
     config.data_offset = 0
+    config.test_set = 'bbh'
+    config.few_shot = 0
 
     # attack-related parameters
     config.attack = 'gcg'

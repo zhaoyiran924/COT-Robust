@@ -12,6 +12,11 @@ from itertools import cycle
 
 import random
 import string
+# random.seed(42)
+
+import nltk
+from nltk.corpus import words
+nltk.download('words')
 
 def token_gradients(model, input_ids, input_slice, target_slice, loss_slice):
 
@@ -90,51 +95,102 @@ class GCGPromptManager(PromptManager):
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
+        print("An instance of GCGPromptManager has been created!")
+
 
 
     def randomly_replace_letter(self, word):
         if len(word) == 0:
             return word  # Return the word as is if it's empty
-
-        # Choose a random position to replace
-        random_position = random.randint(0, len(word) - 1)
         
-        # Choose a random letter from the alphabet
-        # Note: You might want to handle uppercase letters if necessary
-        random_letter = random.choice(string.ascii_lowercase)
-        
-        # Ensure the new letter is different from the original letter
-        while random_letter == word[random_position]:
-            random_letter = random.choice(string.ascii_lowercase)
+        if len(word) == 1 or len(word) == 2:
+            return word
 
-        # Replace the letter in the chosen position with the random letter
-        new_word = word[:random_position] + random_letter + word[random_position + 1:]
+        total_length = len(word) + 1
+
+        adding_whitespace = random.random()
+
+        if adding_whitespace <=1/total_length:
+            new_word = word + ' '
+
+        else:
+            replace_dict = {'a':['q', 'w', 's', 'z', 'x', 'aa', ''],
+            'b':['g', 'h', 'v', 'n', 'bb',''],
+            'c':['d', 'f', 'x', 'v', 'cc'],
+            'd':['e', 'r', 's', 'f', 'x', 'c', 'dd',''],
+            'e':['w', 'r', 's', 'd', 'ee',''],
+            'f':['r', 't', 'd', 'g', 'c', 'v', 'ff',''],
+            'g':['t', 'y', 'f', 'h', 'v', 'b', 'gg',''],
+            'h':['y', 'u', 'g', 'j', 'b', 'n', 'hh',''],
+            'i':['u', 'o', 'j', 'k', 'ii',''],
+            'j':['u', 'i', 'h', 'k', 'n', 'm', 'jj',''],
+            'k':['i', 'o', 'j', 'l', 'm', 'kk',''],
+            'l':['o', 'p', 'k', 'll',''],
+            'm':['j', 'k', 'n', 'mm',''],
+            'n':['h', 'j', 'b', 'm', 'nn',''],
+            'o':['i', 'p', 'k', 'l', 'oo',''],
+            'p':['o', 'l', 'pp',''],
+            'q':['w', 'a', 'qq',''],
+            'r':['e', 't', 'd', 'f', 'rr',''],
+            's':['w', 'e', 'a', 'd', 'z', 'x', 'ss',''],
+            't':['r', 'y', 'f', 'g', 'tt',''],
+            'u':['y', 'i', 'h', 'j', 'uu',''],
+            'v':['f', 'g', 'c', 'b', 'vv',''],
+            'w':['q', 'e', 'a', 's', 'ww',''],
+            'x':['s', 'd', 'z', 'c', 'xx',''],
+            'y':['t', 'u', 'g', 'h', 'yy',''],
+            'z':['a', 's', 'x', 'zz','']
+            }
+
+
+            random_position = random.randint(1, len(word) - 1)
+
+            new_word = word
+
+            try:
+                if word[random_position].isupper():
+                    random_letter = replace_dict[word[random_position].lower()][random.randint(1, len(replace_dict[word[random_position].lower()]) - 1)]
+                    random_letter = random_letter.upper()
+                else:
+                    random_letter = replace_dict[word[random_position]][random.randint(1, len(replace_dict[word[random_position]]) - 1)]
+            # Replace the letter in the chosen position with the random letter
+                new_word = word[:random_position] + random_letter + word[random_position + 1:]
+                word=new_word
+            except:
+                print("except")
+                pass
         
         return new_word
 
 
     def sample_control(self, device, batch_size, indexes=[], current_goal = None):
-
-        # control_toks = self.control_toks.to(grad.device)
+        
         control_toks = torch.tensor(current_goal).to(device)
-        original_control_toks = control_toks.repeat(batch_size, 1)
 
-        indexes_tensor = torch.tensor(indexes)
-        repeats = (batch_size + len(indexes) - 1) // len(indexes)  # Ceiling division
-        new_token_pos = indexes_tensor.repeat(repeats)[:batch_size].to(device)
+        try:
+            original_control_toks = control_toks.repeat(batch_size, 1)
 
-        candidates = []
 
-        for index in new_token_pos:
-            new_word = self.randomly_replace_letter(self.tokenizer.decode(current_goal[index]))
-            new_tokens = self.tokenizer(new_word).input_ids[1:]
-            candidate = current_goal[:index] + new_tokens + current_goal[index+1:]
-            candidates.append(candidate)
+            indexes_tensor = torch.tensor(indexes)
+            repeats = (batch_size + len(indexes) - 1) // len(indexes)  # Ceiling division
+            new_token_pos = indexes_tensor.repeat(repeats)[:batch_size].to(device)
 
-        max_length = max(len(inner) for inner in candidates)
-        padded_list = [inner + [0] * (max_length - len(inner)) for inner in candidates]
+            candidates = []
 
-        new_control_toks = tensor = torch.tensor(padded_list).to(device)
+
+            for index in new_token_pos:
+                new_word = self.randomly_replace_letter(self.tokenizer.decode(current_goal[index]))
+                new_tokens = self.tokenizer(new_word).input_ids[1:]
+                candidate = current_goal[:index] + new_tokens + current_goal[index+1:]
+                candidates.append(candidate)
+
+            max_length = max(len(inner) for inner in candidates)
+            padded_list = [inner + [0] * (max_length - len(inner)) for inner in candidates]
+
+            new_control_toks = torch.tensor(padded_list).to(device)
+        except:
+            new_control_toks = control_toks.unsqueeze(0).expand(batch_size, -1)
+
 
         return new_control_toks
 
@@ -144,10 +200,28 @@ class GCGMultiPromptAttack(MultiPromptAttack):
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
+        
+    # def find_consecutive_thirteens(self, numbers):
+    #     indices = []
+    #     # Loop through the list until the second last element
+    #     for i in range(1, len(numbers)):
+    #         # Check if the current element and the next one are both 13
+    #         if numbers[i] == 13 and numbers[i - 1] == 13:
+    #             indices.append(i)
+    #     return indices
+
+    def find_consecutive_thirteens(self, numbers):
+        indices = []
+        # Loop through the list until the second last element
+        for i in range(1, len(numbers)):
+            # Check if the current element and the next one are both 13
+            if numbers[i] == 13 and numbers[i-1] == 13:
+                indices.append(i)
+        return indices
 
     def step(self, 
              batch_size=1024, 
-             topk=256, 
+             topk=64, 
              temp=1, 
              allow_non_ascii=True, 
              target_weight=1, 
@@ -184,20 +258,27 @@ class GCGMultiPromptAttack(MultiPromptAttack):
             else:
                 grad += new_grad
 
-        # punctuation = ['.', ',', '!', '?', ':', '-', '(', ')', '\"', '[', ']', '’',  'at', 'in', 'on', 'to', 'from', 'into', 'of', 'with', 'without', 'for', 'by', 'a', 'the']
-        # punctuation_token = [29889, 29892, 29991, 29973, 29901, 29899, 313, 29897, 376, 518, 29962, 30010, 472, 297, 373, 304, 515, 964, 310, 411, 1728, 363, 491, 263, 278]
 
         # pdb.set_trace()
-        
         token_goals = self.prompts[j].tokenizer(self.goals).input_ids[0][1:]
         values_sum = torch.abs(grad).sum(dim=1)
-        top_values, top_index = torch.topk(values_sum, len(token_goals), dim=0)
+        top_values, top_index = torch.topk(values_sum, len(token_goals), dim=0) #change top k here
 
-        indexes = []
+        indices_of_consecutive_thirteens = self.find_consecutive_thirteens(token_goals)
+        if len(indices_of_consecutive_thirteens) > 0:
+            consider = indices_of_consecutive_thirteens[-1] + 3
+        else:
+            consider = 1
+
+        
+        indexes = [] 
         for index in top_index.tolist():
-            if self.prompts[j].tokenizer.decode(token_goals[index]).isalpha():
+            if index<consider:
+                continue
+            if index>len(token_goals)-13:
+                continue
+            if self.prompts[j].tokenizer.decode(token_goals[index]).replace(' ', '').isalpha():
                 indexes.append(index)
-
 
         with torch.no_grad():
             # control_cand = self.prompts[j].sample_control(grad, batch_size, topk, temp, allow_non_ascii, indexes, token_goals)
@@ -205,10 +286,9 @@ class GCGMultiPromptAttack(MultiPromptAttack):
             control_cands.append(self.get_filtered_cands(j, control_cand, filter_cand=False, curr_control=self.control_str))
         del grad, control_cand ; gc.collect()
         
-        # Search
         loss = torch.zeros(len(control_cands) * batch_size).to(main_device)
         with torch.no_grad():
-            for fan, cand in enumerate(control_cands):
+            for j, cand in enumerate(control_cands):
                 # Looping through the prompts at this level is less elegant, but
                 # we can manage VRAM better this way
                 progress = tqdm(range(len(self.prompts[0])), total=len(self.prompts[0])) if verbose else enumerate(self.prompts[0])
@@ -216,19 +296,21 @@ class GCGMultiPromptAttack(MultiPromptAttack):
                     for k, worker in enumerate(self.workers):
                         worker(self.prompts[k][i], "logits", worker.model, cand, return_ids=True)
                     logits, ids = zip(*[worker.results.get() for worker in self.workers])
-                    loss[fan*batch_size:(fan+1)*batch_size] += sum([
+                    loss[j*batch_size:(j+1)*batch_size] += sum([
                         target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1).to(main_device) 
                         for k, (logit, id) in enumerate(zip(logits, ids))
                     ])
                     if control_weight != 0:
-                        loss[fan*batch_size:(fan+1)*batch_size] += sum([
+                        loss[j*batch_size:(j+1)*batch_size] += sum([
                             control_weight*self.prompts[k][i].control_loss(logit, id).mean(dim=-1).to(main_device)
                             for k, (logit, id) in enumerate(zip(logits, ids))
                         ])
                     del logits, ids ; gc.collect()
                     
                     if verbose:
-                        progress.set_description(f"loss={loss[fan*batch_size:(fan+1)*batch_size].min().item()/(i+1):.4f}")
+                        progress.set_description(f"loss={loss[j*batch_size:(j+1)*batch_size].min().item()/(i+1):.4f}")
+            
+            torch.cuda.empty_cache()
 
             min_idx = loss.argmin()
             model_idx = min_idx // batch_size
@@ -247,5 +329,6 @@ class GCGMultiPromptAttack(MultiPromptAttack):
 
         print('Current length:', len(self.workers[0].tokenizer(next_control).input_ids[1:]))
         print(next_control)
+        torch.cuda.empty_cache()
 
         return next_control, cand_loss.item() / len(self.prompts[0]) / len(self.workers)

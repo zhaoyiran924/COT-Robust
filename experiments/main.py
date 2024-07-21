@@ -26,12 +26,12 @@ def main(_):
 
     print(params)
 
-    train_goals, train_targets, test_goals, test_targets = get_goals_and_targets(params)
+    train_goals, train_targets, test_goals, test_targets, correct_answer = get_goals_and_targets(params)
 
 
 
-    process_fn = lambda s: s.replace('Sure, h', 'H')
-    process_fn2 = lambda s: s.replace("Sure, here is", "Sure, here's")
+    # process_fn = lambda s: s.replace('Sure, h', 'H')
+    # process_fn2 = lambda s: s.replace("Sure, here is", "Sure, here's")
     # train_targets = [process_fn(t) if np.random.random() < 0.5 else process_fn2(t) for t in train_targets]
     # test_targets = [process_fn(t) if np.random.random() < 0.5 else process_fn2(t) for t in test_targets]
 
@@ -95,6 +95,7 @@ def main(_):
         verbose=params.verbose,
         filter_cand=params.filter_cand,
         allow_non_ascii=params.allow_non_ascii,
+        correct_answer=correct_answer,
     )
 
     for worker in workers + test_workers:

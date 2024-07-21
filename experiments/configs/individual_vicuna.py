@@ -9,8 +9,8 @@ def get_config():
 
     config.result_prefix = 'results/individual_vicuna'
 
-    config.tokenizer_paths=["/mnt/workspace/workgroup/yiran/Vicuna-13b"]
-    config.model_paths=["/mnt/workspace/workgroup/yiran/Vicuna-13b"]
+    config.tokenizer_paths=["/mnt/workspace/workgroup/workgroup_intern/yiran/Vicuna-13b-v1.5"]
+    config.model_paths=["/mnt/workspace/workgroup/workgroup_intern/yiran/Vicuna-13b-v1.5"]
     config.conversation_templates=['vicuna']
 
     return config
