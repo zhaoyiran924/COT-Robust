@@ -14,10 +14,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from fastchat.model import get_conversation_template
 from transformers import (AutoModelForCausalLM, AutoTokenizer, GPT2LMHeadModel,
-                          GPTJForCausalLM, GPTNeoXForCausalLM, MistralForCausalLM,
+                          GPTJForCausalLM, GPTNeoXForCausalLM, MistralForCausalLM, GemmaForCausalLM,Qwen2ForCausalLM,
                           LlamaForCausalLM)
 import pdb
 import json
+
+random.seed(112)
+
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -38,6 +41,10 @@ def get_embedding_layer(model):
         return model.base_model.embed_in
     elif isinstance(model, MistralForCausalLM):
         return model.model.embed_tokens
+    elif isinstance(model, GemmaForCausalLM):
+        return model.model.embed_tokens
+    elif isinstance(model, Qwen2ForCausalLM):
+        return model.model.embed_tokens
     else:
         raise ValueError(f"Unknown model type: {type(model)}")
 
@@ -50,6 +57,10 @@ def get_embedding_matrix(model):
         return model.base_model.embed_in.weight
     elif isinstance(model, MistralForCausalLM):
         return model.model.embed_tokens.weight
+    elif isinstance(model, GemmaForCausalLM):
+        return model.model.embed_tokens.weight
+    elif isinstance(model, Qwen2ForCausalLM):
+        return model.model.embed_tokens.weight
     else:
         raise ValueError(f"Unknown model type: {type(model)}")
 
@@ -61,6 +72,10 @@ def get_embeddings(model, input_ids):
     elif isinstance(model, GPTNeoXForCausalLM):
         return model.base_model.embed_in(input_ids).half()
     elif isinstance(model, MistralForCausalLM):
+        return model.model.embed_tokens(input_ids)
+    elif isinstance(model, GemmaForCausalLM):
+        return model.model.embed_tokens(input_ids)
+    elif isinstance(model, Qwen2ForCausalLM):
         return model.model.embed_tokens(input_ids)
     else:
         raise ValueError(f"Unknown model type: {type(model)}")
@@ -142,21 +157,58 @@ class AttackPrompt(object):
         encoding = self.tokenizer(prompt)
         toks = encoding.input_ids
 
-        if self.conv_template.name == 'llama-2':
+        # if self.conv_template.name == 'llama-2':
+        #     self.conv_template.messages = []
+
+        #     self.conv_template.append_message(self.conv_template.roles[0], None)
+        #     toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
+        #     self._user_role_slice = slice(None, len(toks))
+
+        #     self.conv_template.update_last_message(f"{self.goal}")
+        #     toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
+        #     self._goal_slice = slice(self._user_role_slice.stop, max(self._user_role_slice.stop, len(toks)))
+
+        #     separator = ' ' if self.goal else ''
+        #     self.conv_template.update_last_message(f"{self.goal}{separator}{self.control}")
+        #     toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
+        #     self._control_slice = slice(self._goal_slice.stop, len(toks))
+
+        #     self.conv_template.append_message(self.conv_template.roles[1], None)
+        #     toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
+        #     self._assistant_role_slice = slice(self._control_slice.stop, len(toks))
+
+        #     self.conv_template.update_last_message(f"{self.target}")
+        #     toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
+        #     self._target_slice = slice(self._assistant_role_slice.stop, len(toks)-2)
+        #     self._loss_slice = slice(self._assistant_role_slice.stop-1, len(toks)-3)
+
+        # else:
+        python_tokenizer = False or self.conv_template.name == 'oasst_pythia'
+
+        try:
+            encoding.char_to_token(len(prompt)-1)
+        except:
+            python_tokenizer = True
+        if python_tokenizer:
+            # This is specific to the vicuna and pythia tokenizer and conversation prompt.
+            # It will not work with other tokenizers or prompts.
             self.conv_template.messages = []
 
             self.conv_template.append_message(self.conv_template.roles[0], None)
             toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
             self._user_role_slice = slice(None, len(toks))
 
+            # pdb.set_trace()
+
             self.conv_template.update_last_message(f"{self.goal}")
             toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
-            self._goal_slice = slice(self._user_role_slice.stop, max(self._user_role_slice.stop, len(toks)))
+            self._goal_slice = slice(self._user_role_slice.stop, max(self._user_role_slice.stop, len(toks)-1))
 
-            separator = ' ' if self.goal else ''
-            self.conv_template.update_last_message(f"{self.goal}{separator}{self.control}")
-            toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
-            self._control_slice = slice(self._goal_slice.stop, len(toks))
+            # separator = ' ' if self.goal else ''
+            # self.conv_template.update_last_message(f"{self.goal}{separator}{self.control}")
+            # toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
+            # self._control_slice = slice(self._goal_slice.stop, len(toks)-1)
+            self._control_slice = self._goal_slice
 
             self.conv_template.append_message(self.conv_template.roles[1], None)
             toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
@@ -164,74 +216,37 @@ class AttackPrompt(object):
 
             self.conv_template.update_last_message(f"{self.target}")
             toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
-            self._target_slice = slice(self._assistant_role_slice.stop, len(toks)-2)
-            self._loss_slice = slice(self._assistant_role_slice.stop-1, len(toks)-3)
-
+            self._target_slice = slice(self._assistant_role_slice.stop, len(toks)-1)
+            self._loss_slice = slice(self._assistant_role_slice.stop-1, len(toks)-2)
         else:
-            python_tokenizer = False or self.conv_template.name == 'oasst_pythia'
-
-            try:
-                encoding.char_to_token(len(prompt)-1)
-            except:
-                python_tokenizer = True
-            if python_tokenizer:
-                # This is specific to the vicuna and pythia tokenizer and conversation prompt.
-                # It will not work with other tokenizers or prompts.
-                self.conv_template.messages = []
-
-                self.conv_template.append_message(self.conv_template.roles[0], None)
-                toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
-                self._user_role_slice = slice(None, len(toks))
-
-                # pdb.set_trace()
-
-                self.conv_template.update_last_message(f"{self.goal}")
-                toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
-                self._goal_slice = slice(self._user_role_slice.stop, max(self._user_role_slice.stop, len(toks)-1))
-
-                # separator = ' ' if self.goal else ''
-                # self.conv_template.update_last_message(f"{self.goal}{separator}{self.control}")
-                # toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
-                # self._control_slice = slice(self._goal_slice.stop, len(toks)-1)
-                self._control_slice = self._goal_slice
-
-                self.conv_template.append_message(self.conv_template.roles[1], None)
-                toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
-                self._assistant_role_slice = slice(self._control_slice.stop, len(toks))
-
-                self.conv_template.update_last_message(f"{self.target}")
-                toks = self.tokenizer(self.conv_template.get_prompt()).input_ids
-                self._target_slice = slice(self._assistant_role_slice.stop, len(toks)-1)
-                self._loss_slice = slice(self._assistant_role_slice.stop-1, len(toks)-2)
-            else:
-                self._system_slice = slice(
-                    None, 
-                    encoding.char_to_token(len(self.conv_template.system))
-                )
-                self._user_role_slice = slice(
-                    encoding.char_to_token(prompt.find(self.conv_template.roles[0])),
-                    encoding.char_to_token(prompt.find(self.conv_template.roles[0]) + len(self.conv_template.roles[0]) + 1)
-                )
-                self._goal_slice = slice(
-                    encoding.char_to_token(prompt.find(self.goal)),
-                    encoding.char_to_token(prompt.find(self.goal) + len(self.goal))
-                )
-                self._control_slice = slice(
-                    encoding.char_to_token(prompt.find(self.control)),
-                    encoding.char_to_token(prompt.find(self.control) + len(self.control))
-                )
-                self._assistant_role_slice = slice(
-                    encoding.char_to_token(prompt.find(self.conv_template.roles[1])),
-                    encoding.char_to_token(prompt.find(self.conv_template.roles[1]) + len(self.conv_template.roles[1]) + 1)
-                )
-                self._target_slice = slice(
-                    encoding.char_to_token(prompt.find(self.target)),
-                    encoding.char_to_token(prompt.find(self.target) + len(self.target))
-                )
-                self._loss_slice = slice(
-                    encoding.char_to_token(prompt.find(self.target)) - 1,
-                    encoding.char_to_token(prompt.find(self.target) + len(self.target)) - 1
-                )
+            self._system_slice = slice(
+                None, 
+                encoding.char_to_token(len(self.conv_template.system))
+            )
+            self._user_role_slice = slice(
+                encoding.char_to_token(prompt.find(self.conv_template.roles[0])),
+                encoding.char_to_token(prompt.find(self.conv_template.roles[0]) + len(self.conv_template.roles[0]) + 1)
+            )
+            self._goal_slice = slice(
+                encoding.char_to_token(prompt.find(self.goal)),
+                encoding.char_to_token(prompt.find(self.goal) + len(self.goal))
+            )
+            self._control_slice = slice(
+                encoding.char_to_token(prompt.find(self.control)),
+                encoding.char_to_token(prompt.find(self.control) + len(self.control))
+            )
+            self._assistant_role_slice = slice(
+                encoding.char_to_token(prompt.find(self.conv_template.roles[1])),
+                encoding.char_to_token(prompt.find(self.conv_template.roles[1]) + len(self.conv_template.roles[1]) + 1)
+            )
+            self._target_slice = slice(
+                encoding.char_to_token(prompt.find(self.target)),
+                encoding.char_to_token(prompt.find(self.target) + len(self.target))
+            )
+            self._loss_slice = slice(
+                encoding.char_to_token(prompt.find(self.target)) - 1,
+                encoding.char_to_token(prompt.find(self.target) + len(self.target)) - 1
+            )
 
         self.input_ids = torch.tensor(toks[:self._target_slice.stop], device='cpu')
         self.conv_template.messages = []
@@ -742,7 +757,6 @@ class MultiPromptAttack(object):
                      verbose=verbose)
 
         for i in range(n_steps):
-            
             if stop_on_success:
                 model_tests_jb, model_tests_mb, _ = self.test(self.workers, self.prompts)
                 if all(all(tests for tests in model_test) for model_test in model_tests_jb):
@@ -763,7 +777,8 @@ class MultiPromptAttack(object):
                 verbose=verbose
             )
 
-            # pdb.set_trace()
+            torch.cuda.empty_cache()
+
             self.goal_str = control
             self.goals = [control]
             runtime = time.time() - start
@@ -772,9 +787,10 @@ class MultiPromptAttack(object):
                 self.control_str = control
             
             prev_loss = loss
-            if loss < best_loss:
-                best_loss = loss
-                best_control = control
+            # if loss < best_loss:
+            best_loss = loss
+            best_control = control
+            
             print('Current Loss:', loss, 'Best Loss:', best_loss)
 
             if self.logfile is not None and (i+1+anneal_from) % test_steps == 0:
@@ -785,6 +801,8 @@ class MultiPromptAttack(object):
                 self.log(i+1+anneal_from, n_steps+anneal_from, control, best_loss, runtime, model_tests, verbose=verbose)
 
                 self.control_str = last_control
+
+
 
         return self.control_str, loss, steps
 
@@ -997,6 +1015,7 @@ class ProgressiveMultiPromptAttack(object):
             stop_on_success: bool = True,
             verbose: bool = True,
             filter_cand: bool = True,
+            correct_answer: list=None,
         ):
         """
         Executes the progressive multi prompt attack.
@@ -1047,6 +1066,7 @@ class ProgressiveMultiPromptAttack(object):
             log['params']['anneal'] = anneal
             log['params']['incr_control'] = incr_control
             log['params']['stop_on_success'] = stop_on_success
+            log['params']['correct_answer'] = correct_answer
 
             with open(self.logfile, 'w') as f:
                 json.dump(log, f, indent=4)
@@ -1231,7 +1251,8 @@ class IndividualPromptAttack(object):
             incr_control: bool = True,
             stop_on_success: bool = True,
             verbose: bool = True,
-            filter_cand: bool = True
+            filter_cand: bool = True,
+            correct_answer: list=None,
         ):
         """
         Executes the individual prompt attack.
@@ -1281,6 +1302,7 @@ class IndividualPromptAttack(object):
             log['params']['anneal'] = anneal
             log['params']['incr_control'] = incr_control
             log['params']['stop_on_success'] = stop_on_success
+            log['correct_answer'] = correct_answer
 
             with open(self.logfile, 'w') as f:
                 json.dump(log, f, indent=4)
@@ -1630,38 +1652,76 @@ def get_goals_and_targets(params):
     test_targets = getattr(params, 'test_targets', [])
     offset = getattr(params, 'data_offset', 0)
 
-    with open(params.train_data, 'r') as file:
-        data = json.load(file)
 
-    train_goals = data['question'][params.data_offset:params.n_train_data]
-    train_targets = data['answer'][params.data_offset:params.n_train_data]
-    test_goals = data['question'][params.data_offset:params.n_test_data]
-    test_targets = data['answer'][params.data_offset:params.n_test_data]
-    
-    # if params.train_data:
-    #     train_data = pd.read_csv(params.train_data)
-    #     train_targets = train_data['target'].tolist()[offset:offset+params.n_train_data]
-    #     if 'goal' in train_data.columns:
-    #         train_goals = train_data['goal'].tolist()[offset:offset+params.n_train_data]
-    #     else:
-    #         train_goals = [""] * len(train_targets)
-    #     if params.test_data and params.n_test_data > 0:
-    #         test_data = pd.read_csv(params.test_data)
-    #         test_targets = test_data['target'].tolist()[offset:offset+params.n_test_data]
-    #         if 'goal' in test_data.columns:
-    #             test_goals = test_data['goal'].tolist()[offset:offset+params.n_test_data]
-    #         else:
-    #             test_goals = [""] * len(test_targets)
-    #     elif params.n_test_data > 0:
-    #         test_targets = train_data['target'].tolist()[offset+params.n_train_data:offset+params.n_train_data+params.n_test_data]
-    #         if 'goal' in train_data.columns:
-    #             test_goals = train_data['goal'].tolist()[offset+params.n_train_data:offset+params.n_train_data+params.n_test_data]
-    #         else:
-    #             test_goals = [""] * len(test_targets)
+    train_goals = []
+    test_goals = []
+    test_goals = []
+    test_targets = []
+    ground_truth = []
+
+    # if params.test_set == 'bbh':
+    #     with open(params.train_data, 'r') as file:
+    #         data = json.load(file)
+    #     sample_data = random.sample(data['examples'], params.n_train_data)
+    #     topic = params.train_data.rsplit('/', 1)[-1].rsplit('.json', 1)[0]
+    #     file_path = '../../prompt/bbh/' + topic + '.txt'
+    #     with open(file_path, 'r') as file:
+    #         prompt = file.read()
+    #     task_instruction = prompt.split('\n\n')[0]
+    #     examples = prompt.split('\n\n')[1:]
+    #     few_prompt = task_instruction + '\n\n' + '\n\n'.join(examples[:params.few_shot]) + '\n\n'
+    #     for data in sample_data:
+    #         train_goals.append(few_prompt + 'Q: ' + data['input'] + '\nA: Let\'s think step by step.')
+    #         train_targets.append('Sorry, I\'m unable to answer the question.')
+    #         ground_truth.append(data['target'])
+    #         test_goals.append(few_prompt + 'Q: ' + data['input'] + '\nA: Let\'s think step by step.')
+    #         test_targets.append('Sorry, I\'m unable to answer the question.')
+
+    if params.test_set == 'bbh':
+        with open(params.train_data, 'r') as file:
+            dataset = json.load(file)
+        sample_data = random.sample(dataset, params.n_train_data)
+        for data in sample_data:
+            task_instruction = data['question'].split('\n\n')[0]
+            examples = data['question'].split('\n\n')[1:-1]
+            few_prompt = task_instruction + '\n\n' + '\n\n'.join(examples[:params.few_shot]) + '\n\n'
+            train_goals.append(few_prompt + data['question'].split('\n\n')[-1])
+            train_targets.append('Sorry, I\'m unable to answer the question.')
+            ground_truth.append([data['answer'], data['subject']])
+            test_goals.append(few_prompt + data['question'].split('\n\n')[-1])
+            test_targets.append('Sorry, I\'m unable to answer the question.')
+
+    if params.test_set == 'gsm8k':
+        dataset = []
+        with open(params.train_data, 'r') as file:
+            for line in file:
+                json_obj = json.loads(line.strip())
+                dataset.append(json_obj)
+        sample_data = random.sample(dataset, params.n_train_data)
+        for data in sample_data:
+            train_goals.append(f'Question: ' + data['question'] + '\nAnswer: Let\'s think step by step.')
+            train_targets.append('Sorry, I\'m unable to answer the question.')
+            ground_truth.append(data['answer'])
+            test_goals.append(f'Question: ' + data['question'] + '\nAnswer: Let\'s think step by step.')
+            test_targets.append('Sorry, I\'m unable to answer the question.')
+
+    if params.test_set == 'mmlu':
+        with open(params.train_data, 'r') as file:
+            dataset = json.load(file)
+        sample_data = random.sample(dataset, params.n_train_data)
+        for data in sample_data:
+            task_instruction = data['question'].split('\n\n')[0]
+            examples = data['question'].split('\n\n')[1:-1]
+            few_prompt = task_instruction + '\n\n' + '\n\n'.join(examples[:params.few_shot]) + '\n\n'
+            train_goals.append(few_prompt + data['question'].split('\n\n')[-1])
+            train_targets.append('Sorry, I\'m unable to answer the question.')
+            ground_truth.append([data['answer'], data['subject']])
+            test_goals.append(few_prompt + data['question'].split('\n\n')[-1])
+            test_targets.append('Sorry, I\'m unable to answer the question.')
     
     assert len(train_goals) == len(train_targets)
     assert len(test_goals) == len(test_targets)
     print('Loaded {} train goals'.format(len(train_goals)))
     print('Loaded {} test goals'.format(len(test_goals)))
 
-    return train_goals, train_targets, test_goals, test_targets
+    return train_goals, train_targets, test_goals, test_targets, ground_truth

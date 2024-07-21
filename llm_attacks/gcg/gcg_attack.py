@@ -96,185 +96,101 @@ class GCGPromptManager(PromptManager):
 
         super().__init__(*args, **kwargs)
         print("An instance of GCGPromptManager has been created!")
-        # global_dict={}
-        # global_count=0
+
 
 
     def randomly_replace_letter(self, word):
-        print("I am getting calleddddd: start from 1, repeated letter")
-
-        print("old word:", word)
-
-        word=word.lower()
-
         if len(word) == 0:
             return word  # Return the word as is if it's empty
         
-        if len(word) == 1:
+        if len(word) == 1 or len(word) == 2:
             return word
-        replace_dict = {'a':['q', 'w', 's', 'z', 'x'],
-        'b':['g', 'h', 'v', 'n'],
-        'c':['d', 'f', 'x', 'v'],
-        'd':['e', 'r', 's', 'f', 'x', 'c'],
-        'e':['w', 'r', 's', 'd'],
-        'f':['r', 't', 'd', 'g', 'c', 'v'],
-        'g':['t', 'y', 'f', 'h', 'v', 'b'],
-        'h':['y', 'u', 'g', 'j', 'b', 'n'],
-        'i':['u', 'o', 'j', 'k'],
-        'j':['u', 'i', 'h', 'k', 'n', 'm'],
-        'k':['i', 'o', 'j', 'l', 'm'],
-        'l':['o', 'p', 'k'],
-        'm':['j', 'k', 'n'],
-        'n':['h', 'j', 'b', 'm'],
-        'o':['i', 'p', 'k', 'l'],
-        'p':['o', 'l'],
-        'q':['w', 'a'],
-        'r':['e', 't', 'd', 'f'],
-        's':['w', 'e', 'a', 'd', 'z', 'x'],
-        't':['r', 'y', 'f', 'g'],
-        'u':['y', 'i', 'h', 'j'],
-        'v':['f', 'g', 'c', 'b'],
-        'w':['q', 'e', 'a', 's'],
-        'x':['s', 'd', 'z', 'c'],
-        'y':['t', 'u', 'g', 'h'],
-        'z':['a', 's', 'x']
-        }
-        #     if word in string.punctuation:
-        #         # Generate a random punctuation character
-        #         new_punctuation = random.choice(string.punctuation)
-        #         return new_punctuation
-        #     else:
-        #         return word
 
-        # replace_dict = {'a':['q', 'w', 's', 'z', 'x'],
-        # 'b':['g', 'h', 'v', 'n'],
-        # 'c':['d', 'f', 'x', 'v'],
-        # 'd':['e', 'r', 's', 'f', 'x', 'c'],
-        # 'e':['w', 'r', 's', 'd', '3', '4'],
-        # 'f':['r', 't', 'd', 'g', 'c', 'v'],
-        # 'g':['t', 'y', 'f', 'h', 'v', 'b'],
-        # 'h':['y', 'u', 'g', 'j', 'b', 'n'],
-        # 'i':['u', 'o', 'j', 'k', '8', '9'],
-        # 'j':['u', 'i', 'h', 'k', 'n', 'm'],
-        # 'k':['i', 'o', 'j', 'l', 'm'],
-        # 'l':['o', 'p', 'k'],
-        # 'm':['j', 'k', 'n'],
-        # 'n':['h', 'j', 'b', 'm'],
-        # 'o':['i', 'p', 'k', 'l', '9','0'],
-        # 'p':['o', 'l','0'],
-        # 'q':['w', 'a', '1', '2'],
-        # 'r':['e', 't', 'd', 'f', '4', '5'],
-        # 's':['w', 'e', 'a', 'd', 'z', 'x'],
-        # 't':['r', 'y', 'f', 'g', '5', '6'],
-        # 'u':['y', 'i', 'h', 'j', '7', '8'],
-        # 'v':['f', 'g', 'c', 'b'],
-        # 'w':['q', 'e', 'a', 's', '2', '3'],
-        # 'x':['s', 'd', 'z', 'c'],
-        # 'y':['t', 'u', 'g', 'h','6','7'],
-        # 'z':['a', 's', 'x']
-        # } #get how many times it gets a actual work and how many times it ends up with a random word
-        # Get a list of valid English words
-        valid_words = set(words.words())
-        def replace_letter(word, index, new_letter):
-            return word[:index] + new_letter + word[index + 1:]
-        check=False
-        for i,v in enumerate(word):
-            if i==0:
-                continue
-            if v.isupper():
-                for new_letter in replace_dict[v.lower()]: #this one is based on your dictionary of nearest letter on keyboard
-                        new_word = replace_letter(word, i, new_letter)
-                        if new_word in valid_words:
-                            new_word = replace_letter(word, i, new_letter.upper())
-                            check=True
-                            break
-                            # print('updatedddddddd')
-                            # return new_word
-            else:
-                try:
-                    for new_letter in replace_dict[v]:
-                        new_word = replace_letter(word, i, new_letter)
-                        if new_word in valid_words:
-                            check=True
-                            break
-                except:
-                    continue
-            if check==True:
+        total_length = len(word) + 1
+
+        adding_whitespace = random.random()
+
+        if adding_whitespace <=1/total_length:
+            new_word = word + ' '
+
+        else:
+            replace_dict = {'a':['q', 'w', 's', 'z', 'x', 'aa', ''],
+            'b':['g', 'h', 'v', 'n', 'bb',''],
+            'c':['d', 'f', 'x', 'v', 'cc'],
+            'd':['e', 'r', 's', 'f', 'x', 'c', 'dd',''],
+            'e':['w', 'r', 's', 'd', 'ee',''],
+            'f':['r', 't', 'd', 'g', 'c', 'v', 'ff',''],
+            'g':['t', 'y', 'f', 'h', 'v', 'b', 'gg',''],
+            'h':['y', 'u', 'g', 'j', 'b', 'n', 'hh',''],
+            'i':['u', 'o', 'j', 'k', 'ii',''],
+            'j':['u', 'i', 'h', 'k', 'n', 'm', 'jj',''],
+            'k':['i', 'o', 'j', 'l', 'm', 'kk',''],
+            'l':['o', 'p', 'k', 'll',''],
+            'm':['j', 'k', 'n', 'mm',''],
+            'n':['h', 'j', 'b', 'm', 'nn',''],
+            'o':['i', 'p', 'k', 'l', 'oo',''],
+            'p':['o', 'l', 'pp',''],
+            'q':['w', 'a', 'qq',''],
+            'r':['e', 't', 'd', 'f', 'rr',''],
+            's':['w', 'e', 'a', 'd', 'z', 'x', 'ss',''],
+            't':['r', 'y', 'f', 'g', 'tt',''],
+            'u':['y', 'i', 'h', 'j', 'uu',''],
+            'v':['f', 'g', 'c', 'b', 'vv',''],
+            'w':['q', 'e', 'a', 's', 'ww',''],
+            'x':['s', 'd', 'z', 'c', 'xx',''],
+            'y':['t', 'u', 'g', 'h', 'yy',''],
+            'z':['a', 's', 'x', 'zz','']
+            }
+
+
+            random_position = random.randint(1, len(word) - 1)
+
+            new_word = word
+
+            try:
+                if word[random_position].isupper():
+                    random_letter = replace_dict[word[random_position].lower()][random.randint(1, len(replace_dict[word[random_position].lower()]) - 1)]
+                    random_letter = random_letter.upper()
+                else:
+                    random_letter = replace_dict[word[random_position]][random.randint(1, len(replace_dict[word[random_position]]) - 1)]
+            # Replace the letter in the chosen position with the random letter
+                new_word = word[:random_position] + random_letter + word[random_position + 1:]
                 word=new_word
-                break
-                        # print('updatedddddddd')
-                        # return new_word
-        # word=new_word
-        #if none of the words replaced are a legit word, just randomly replace
-        # Choose a random position to replace
-        random_position = random.randint(1, len(word) - 1)
-        # while word[random_position] in '1234567890':
-        #     print('in the while loop')
-        #     random_position = random.randint(1, len(word) - 1)
-    
-        try:
-            if word[random_position].isupper():
-                random_letter = replace_dict[word[random_position].lower()][random.randint(1, len(replace_dict[word[random_position].lower()]) - 1)]
-                random_letter = random_letter.upper()
-            else:
-                random_letter = replace_dict[word[random_position]][random.randint(1, len(replace_dict[word[random_position]]) - 1)]
-        # Replace the letter in the chosen position with the random letter
-            new_word = word[:random_position] + random_letter + word[random_position + 1:]
-            word=new_word
-        except:
-            pass
+            except:
+                print("except")
+                pass
         
-        
-        random_position = random.randint(1, len(word) - 1)
-
-        #repeated letter
-         # Get the letter at the chosen index
-        letter = word[random_position]
-    
-        # Repeat the letter
-        new_word = word[:random_position+1] + letter + word[random_position+1:]
-
-        # #add punctuations
-        # # if random.randint(0,1) == 1:
-        # all_punctuations = string.punctuation
-        # random_punctuation = random.choice(all_punctuations)
-        # new_word = new_word + random_punctuation
-
-        # #add spacing
-        # new_word=new_word+' '
-
-        # #add number
-        # new_word+=str(random.randint(0,9))
-
-        # print('randomly replacedddddddd')
-        print("new word:", new_word)
         return new_word
 
 
     def sample_control(self, device, batch_size, indexes=[], current_goal = None):
-
-        # print("current_goal", self.tokenizer.decode(current_goal))
-
-        # control_toks = self.control_toks.to(grad.device)
+        
         control_toks = torch.tensor(current_goal).to(device)
-        original_control_toks = control_toks.repeat(batch_size, 1)
 
-        indexes_tensor = torch.tensor(indexes)
-        repeats = (batch_size + len(indexes) - 1) // len(indexes)  # Ceiling division
-        new_token_pos = indexes_tensor.repeat(repeats)[:batch_size].to(device)
+        try:
+            original_control_toks = control_toks.repeat(batch_size, 1)
 
-        candidates = []
 
-        for index in new_token_pos:
-            new_word = self.randomly_replace_letter(self.tokenizer.decode(current_goal[index]))
-            new_tokens = self.tokenizer(new_word).input_ids[1:]
-            candidate = current_goal[:index] + new_tokens + current_goal[index+1:]
-            candidates.append(candidate)
+            indexes_tensor = torch.tensor(indexes)
+            repeats = (batch_size + len(indexes) - 1) // len(indexes)  # Ceiling division
+            new_token_pos = indexes_tensor.repeat(repeats)[:batch_size].to(device)
 
-        max_length = max(len(inner) for inner in candidates)
-        padded_list = [inner + [0] * (max_length - len(inner)) for inner in candidates]
+            candidates = []
 
-        new_control_toks = tensor = torch.tensor(padded_list).to(device)
+
+            for index in new_token_pos:
+                new_word = self.randomly_replace_letter(self.tokenizer.decode(current_goal[index]))
+                new_tokens = self.tokenizer(new_word).input_ids[1:]
+                candidate = current_goal[:index] + new_tokens + current_goal[index+1:]
+                candidates.append(candidate)
+
+            max_length = max(len(inner) for inner in candidates)
+            padded_list = [inner + [0] * (max_length - len(inner)) for inner in candidates]
+
+            new_control_toks = torch.tensor(padded_list).to(device)
+        except:
+            new_control_toks = control_toks.unsqueeze(0).expand(batch_size, -1)
+
 
         return new_control_toks
 
@@ -284,6 +200,24 @@ class GCGMultiPromptAttack(MultiPromptAttack):
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
+        
+    # def find_consecutive_thirteens(self, numbers):
+    #     indices = []
+    #     # Loop through the list until the second last element
+    #     for i in range(1, len(numbers)):
+    #         # Check if the current element and the next one are both 13
+    #         if numbers[i] == 13 and numbers[i - 1] == 13:
+    #             indices.append(i)
+    #     return indices
+
+    def find_consecutive_thirteens(self, numbers):
+        indices = []
+        # Loop through the list until the second last element
+        for i in range(1, len(numbers)):
+            # Check if the current element and the next one are both 13
+            if numbers[i] == 13 and numbers[i-1] == 13:
+                indices.append(i)
+        return indices
 
     def step(self, 
              batch_size=1024, 
@@ -328,31 +262,23 @@ class GCGMultiPromptAttack(MultiPromptAttack):
         # pdb.set_trace()
         token_goals = self.prompts[j].tokenizer(self.goals).input_ids[0][1:]
         values_sum = torch.abs(grad).sum(dim=1)
-        print('values_sum',values_sum)
         top_values, top_index = torch.topk(values_sum, len(token_goals), dim=0) #change top k here
 
-        for index, token_id in enumerate(token_goals):
-            # Decode the current token
-            decoded_token = self.prompts[j].tokenizer.decode(token_id)
-            print(decoded_token)
-            
-            # print(self.prompts[j].tokenizer.decode(token_goals[index:index+10]).lower())
-            print(self.prompts[j].tokenizer.decode(token_goals[index:index+13]).lower())
-            # if decoded_token.lower() == "goal" and \
-            if self.prompts[j].tokenizer.decode(token_goals[index:index+13]).lower() == "4pm. So the answer is (D).\n\n".lower(): 
-                consider=index+13
-                print('consider',self.prompts[j].tokenizer.decode(token_goals[consider]).lower())
-                break
+        indices_of_consecutive_thirteens = self.find_consecutive_thirteens(token_goals)
+        if len(indices_of_consecutive_thirteens) > 0:
+            consider = indices_of_consecutive_thirteens[-1] + 3
+        else:
+            consider = 1
 
+        
         indexes = [] 
         for index in top_index.tolist():
             if index<consider:
                 continue
-            if index>len(token_goals)-10:
+            if index>len(token_goals)-13:
                 continue
-            if self.prompts[j].tokenizer.decode(token_goals[index]).isalpha():
+            if self.prompts[j].tokenizer.decode(token_goals[index]).replace(' ', '').isalpha():
                 indexes.append(index)
-
 
         with torch.no_grad():
             # control_cand = self.prompts[j].sample_control(grad, batch_size, topk, temp, allow_non_ascii, indexes, token_goals)
@@ -360,10 +286,9 @@ class GCGMultiPromptAttack(MultiPromptAttack):
             control_cands.append(self.get_filtered_cands(j, control_cand, filter_cand=False, curr_control=self.control_str))
         del grad, control_cand ; gc.collect()
         
-        # Search
         loss = torch.zeros(len(control_cands) * batch_size).to(main_device)
         with torch.no_grad():
-            for fan, cand in enumerate(control_cands):
+            for j, cand in enumerate(control_cands):
                 # Looping through the prompts at this level is less elegant, but
                 # we can manage VRAM better this way
                 progress = tqdm(range(len(self.prompts[0])), total=len(self.prompts[0])) if verbose else enumerate(self.prompts[0])
@@ -371,57 +296,21 @@ class GCGMultiPromptAttack(MultiPromptAttack):
                     for k, worker in enumerate(self.workers):
                         worker(self.prompts[k][i], "logits", worker.model, cand, return_ids=True)
                     logits, ids = zip(*[worker.results.get() for worker in self.workers])
-                    # Initialize a temporary tensor to accumulate losses for smaller batches
-                    temp_loss = torch.zeros(batch_size, device=main_device)
-                    # print('logits.size()',logits.size())
-                    # print('ids.size()',ids.size())
-                    for k, (logit, id) in enumerate(zip(logits, ids)):
-                        # print('logit.size()',logit.size())
-                        # print('id.size()',id.size())
-                        # Split logits and ids into smaller batches
-                        logit_batches = torch.chunk(logit, batch_size//8, dim=0)
-                        id_batches = torch.chunk(id, batch_size//8, dim=0)
-                        index=0
-                        # Compute losses for each smaller batch and accumulate them
-                        for logit_batch, id_batch in zip(logit_batches, id_batches):
-                            end_index = index + logit_batch.size(0)
-                            temp_loss[index:end_index] += target_weight * self.prompts[k][i].target_loss(logit_batch, id_batch).mean(dim=-1)
-                            index=end_index
-                            # print("temp_loss", temp_loss)
-
-                    # # Move accumulated losses to the appropriate device
-                    # temp_loss = temp_loss.to(main_device)
-
-                    # Add accumulated losses to the appropriate slice of the loss tensor
-                    loss[fan*batch_size:(fan+1)*batch_size] += temp_loss
-
-                    # loss[fan*batch_size:(fan+1)*batch_size] += sum([
-                    #     target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1)
-                    #     for k, (logit, id) in enumerate(zip(logits, ids))
-                    # ])
-                    # print(loss[fan*batch_size:(fan+1)*batch_size])
-                    # loss[fan*batch_size:(fan+1)*batch_size] += sum([
-                    #     target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1).to(main_device) 
-                    #     for k, (logit, id) in enumerate(zip(logits, ids))
-                    # ])
-                    # print([
-                    #     target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1).to(main_device) 
-                    #     for k, (logit, id) in enumerate(zip(logits, ids))
-                    # ])
-                    # print(sum([
-                    #     target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1).to(main_device) 
-                    #     for k, (logit, id) in enumerate(zip(logits, ids))
-                    # ]))
-                    # print(loss[fan*batch_size:(fan+1)*batch_size])
+                    loss[j*batch_size:(j+1)*batch_size] += sum([
+                        target_weight*self.prompts[k][i].target_loss(logit, id).mean(dim=-1).to(main_device) 
+                        for k, (logit, id) in enumerate(zip(logits, ids))
+                    ])
                     if control_weight != 0:
-                        loss[fan*batch_size:(fan+1)*batch_size] += sum([
+                        loss[j*batch_size:(j+1)*batch_size] += sum([
                             control_weight*self.prompts[k][i].control_loss(logit, id).mean(dim=-1).to(main_device)
                             for k, (logit, id) in enumerate(zip(logits, ids))
                         ])
                     del logits, ids ; gc.collect()
                     
                     if verbose:
-                        progress.set_description(f"loss={loss[fan*batch_size:(fan+1)*batch_size].min().item()/(i+1):.4f}")
+                        progress.set_description(f"loss={loss[j*batch_size:(j+1)*batch_size].min().item()/(i+1):.4f}")
+            
+            torch.cuda.empty_cache()
 
             min_idx = loss.argmin()
             model_idx = min_idx // batch_size
